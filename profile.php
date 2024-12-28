@@ -20,24 +20,23 @@ $memes = $stmt->fetchAll();
 
 require 'templates/header.php';
 ?>
-<h1 class="title"><?= htmlspecialchars($user['username']) ?>'s Profil</h1>
-<p>Email: <?= htmlspecialchars($user['email']) ?></p>
-<p>Total Meme Dibuat: <?= count($memes) ?></p>
-<h2 class="subtitle">Meme yang diunggah:</h2>
-<div class="columns is-multiline">
-    <?php foreach ($memes as $meme): ?>
-        <div class="column is-one-third">
-            <div class="card">
-                <div class="card-image">
-                    <figure class="image is-4by3">
-                        <img src="uploads/<?= htmlspecialchars($meme['image']) ?>" alt="<?= htmlspecialchars($meme['title']) ?>">
-                    </figure>
+<div class="container mx-auto px-4 py-8">
+    <h1 class="text-2xl font-bold text-center mb-4"><?= htmlspecialchars($user['username']) ?>'s Profil</h1>
+    <p class="text-lg mb-2"><strong>Email:</strong> <?= htmlspecialchars($user['email']) ?></p>
+    <p class="text-lg mb-6"><strong>Total Meme Dibuat:</strong> <?= count($memes) ?></p>
+
+    <h2 class="text-xl font-semibold mb-4">Meme yang diunggah:</h2>
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+        <?php foreach ($memes as $meme): ?>
+            <div class="bg-white shadow-md rounded-lg overflow-hidden">
+                <div class="relative pb-3/4">
+                    <img src="uploads/<?= htmlspecialchars($meme['image']) ?>" alt="<?= htmlspecialchars($meme['title']) ?>" class="absolute inset-0 w-full h-full object-cover">
                 </div>
-                <div class="card-content">
-                    <p><?= htmlspecialchars($meme['title']) ?></p>
+                <div class="p-4">
+                    <p class="text-center font-semibold"><?= htmlspecialchars($meme['title']) ?></p>
                 </div>
             </div>
-        </div>
-    <?php endforeach; ?>
+        <?php endforeach; ?>
+    </div>
 </div>
 <?php require 'templates/footer.php'; ?>
