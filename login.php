@@ -1,14 +1,16 @@
 <?php
 require 'includes/db.php';
 require 'includes/auth.php';
+require 'vendor/autoload.php';
 
 if (isLoggedIn()) {
-    header('Location: index.php');
+    header('Location: /dashboard');
     exit();
 }
 
 $error = '';
 
+// Login manual menggunakan username dan password
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $username = trim($_POST['username']);
     $password = $_POST['password'];
@@ -20,8 +22,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($user && password_verify($password, $user['password'])) {
         $_SESSION['user_id'] = $user['id'];
         $_SESSION['username'] = $user['username'];
+        $_SESSION['avatar'] = $user['avatar']; // Ambil avatar dari database
         $_SESSION['role'] = $user['role'];
-        header('Location: index.php');
+        $_SESSION['login_method'] = 'manual';
+        header('Location: /dashboard');
         exit();
     } else {
         $error = 'Username atau password salah.';

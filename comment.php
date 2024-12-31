@@ -2,18 +2,21 @@
 require 'includes/db.php';
 require 'includes/auth.php';
 
-redirectIfNotLoggedIn();
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $meme_id = (int)$_POST['meme_id'];
-    $content = trim($_POST['content']);
-
-    if ($content) {
-        $stmt = $pdo->prepare("INSERT INTO comments (meme_id, user_id, content) VALUES (?, ?, ?)");
-        $stmt->execute([$meme_id, $_SESSION['user_id'], $content]);
-    }
+if (!isset($_GET['meme_id'])) {
+    http_response_code(400);
+    echo json_encode(['error' => 'Meme ID is required']);
+    exit();
 }
 
-header('Location: index.php');
-exit();
-?>
+$meme_id = (int)$_GET['meme_id'];
+
+$stmt = $pdo->prepare("SELECT comments.*, users.username, users.avatar 
+                       FROM comments 
+                       JOIN users ON comments.user_id = users.id 
+                       WHERE comments.meme_id = ? 
+                       ORDER BY comments.created_at DESC");
+$stmt->execute([$meme_id]);
+$comments = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+header('Content-Type: application/json');
+echo json_encode($comments);

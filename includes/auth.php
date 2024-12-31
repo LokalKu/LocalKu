@@ -11,14 +11,14 @@ function isAdmin() {
 
 function redirectIfNotLoggedIn() {
     if (!isLoggedIn()) {
-        header('Location: login.php');
+        header('Location: /login');
         exit();
     }
 }
 
 function redirectIfNotAdmin() {
     if (!isAdmin()) {
-        header('Location: index.php');
+        header('Location: /dashboard');
         exit();
     }
 }

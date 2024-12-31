@@ -10,17 +10,37 @@ $success = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $email = trim($_POST['email']);
     $password = $_POST['password'] ? password_hash($_POST['password'], PASSWORD_DEFAULT) : null;
+    $avatar = $_FILES['avatar'] ?? null;
 
     try {
+        // Avatar upload handling
+        if ($avatar && $avatar['tmp_name']) {
+            $allowed_types = ['image/jpeg', 'image/png', 'image/gif'];
+            if (!in_array($avatar['type'], $allowed_types)) {
+                throw new Exception('Format file avatar tidak didukung.');
+            }
+
+            $avatar_path = '/uploads/avatars/' . $_SESSION['user_id'] . '-' . time() . '.' . pathinfo($avatar['name'], PATHINFO_EXTENSION);
+            if (!move_uploaded_file($avatar['tmp_name'], $avatar_path)) {
+                throw new Exception('Gagal mengunggah avatar.');
+            }
+
+            $stmt = $pdo->prepare("UPDATE users SET avatar = ? WHERE id = ?");
+            $stmt->execute([$avatar_path, $_SESSION['user_id']]);
+        }
+
+        // Update email and password
         $stmt = $pdo->prepare("UPDATE users SET email = ?, password = IFNULL(?, password) WHERE id = ?");
         $stmt->execute([$email, $password, $_SESSION['user_id']]);
+
         $success = 'Pengaturan berhasil diperbarui.';
-    } catch (PDOException $e) {
-        $error = 'Terjadi kesalahan saat memperbarui pengaturan.';
+    } catch (Exception $e) {
+        $error = $e->getMessage();
     }
 }
 
-$stmt = $pdo->prepare("SELECT email FROM users WHERE id = ?");
+// Fetch user data
+$stmt = $pdo->prepare("SELECT email, avatar FROM users WHERE id = ?");
 $stmt->execute([$_SESSION['user_id']]);
 $user = $stmt->fetch();
 
@@ -37,7 +57,8 @@ require 'templates/header.php';
             <?= htmlspecialchars($success) ?>
         </div>
     <?php endif; ?>
-    <form method="POST" class="max-w-lg mx-auto bg-white shadow-md rounded px-8 py-6">
+    <form method="POST" enctype="multipart/form-data" class="max-w-lg mx-auto bg-white shadow-md rounded px-8 py-6">
+        <!-- Email -->
         <div class="mb-4">
             <label for="email" class="block text-gray-700 font-bold mb-2">Email</label>
             <input 
@@ -48,6 +69,7 @@ require 'templates/header.php';
                 class="border border-gray-300 rounded w-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500" 
                 required>
         </div>
+        <!-- Password -->
         <div class="mb-4">
             <label for="password" class="block text-gray-700 font-bold mb-2">Password Baru (Opsional)</label>
             <input 
@@ -56,6 +78,25 @@ require 'templates/header.php';
                 id="password" 
                 class="border border-gray-300 rounded w-full px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500">
         </div>
+        <!-- Avatar -->
+        <div class="mb-4">
+            <label for="avatar" class="block text-gray-700 font-bold mb-2">Avatar</label>
+            <div class="flex items-center space-x-4">
+                <img 
+                    id="avatarPreview" 
+                    src="/<?= $user['avatar'] ? '/' . htmlspecialchars($user['avatar']) : '/default-avatar.png' ?>" 
+                    alt="Avatar Preview" 
+                    class="w-16 h-16 rounded-full border">
+                <input 
+                    type="file" 
+                    name="avatar" 
+                    id="avatar" 
+                    accept="image/*" 
+                    class="block w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    onchange="previewAvatar(event)">
+            </div>
+        </div>
+        <!-- Submit -->
         <div>
             <button 
                 type="submit" 
@@ -65,4 +106,17 @@ require 'templates/header.php';
         </div>
     </form>
 </div>
+
+<script>
+    // Pratinjau Avatar
+    function previewAvatar(event) {
+        const reader = new FileReader();
+        reader.onload = function() {
+            const output = document.getElementById('avatarPreview');
+            output.src = reader.result;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+</script>
+
 <?php require 'templates/footer.php'; ?>

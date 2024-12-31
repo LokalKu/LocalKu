@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $stmt = $pdo->prepare("INSERT INTO memes (user_id, title, image) VALUES (?, ?, ?)");
         $stmt->execute([$_SESSION['user_id'], $title, $filename]);
-        header('Location: index.php');
+        header('Location: /dashboard');
         exit();
     } else {
         $error = 'Gagal mengunggah gambar.';
